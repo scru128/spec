@@ -31,6 +31,7 @@ Examples in the 26-digit canonical textual representation:
 ## Implementations
 
 - [JavaScript](https://github.com/scru128/javascript)
+- [Java](https://github.com/scru128/java)
 - [Python](https://github.com/scru128/python)
 - [Rust](https://github.com/scru128/rust)
 
