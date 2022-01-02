@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.2 - 2022-01-02
+
+- Applied CC BY 4.0 license.
+
 ## v1.0.1 - 2021-11-22
 
 - Fixed typo.

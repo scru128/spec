@@ -41,7 +41,7 @@ For those interested in implementing SCRU128: [SCRU128 Generator Tester]
 
 [scru128 generator tester]: https://github.com/scru128/gen_test
 
-## Specification v1.0.1
+## Specification v1.0.2
 
 A SCRU128 ID is a 128-bit unsigned integer consisting of four terms:
 
@@ -136,3 +136,7 @@ prevent potential attackers from using this field as a generator's fingerprint.
 The 32-bit `per_gen_random` field must also be reset to a new random number
 whenever an ID is generated to make sure the adjacent IDs generated within the
 same `timestamp` are not predictable.
+
+### License
+
+This work is licensed under a [Creative Commons Attribution 4.0 International (CC BY 4.0) License](http://creativecommons.org/licenses/by/4.0/).
