@@ -30,6 +30,7 @@ Examples in the 26-digit canonical textual representation:
 
 ## Implementations
 
+- [C/C++](https://github.com/scru128/c)
 - [Go](https://github.com/scru128/go-scru128)
 - [Java (with Kotlin and Android compatibility)](https://github.com/scru128/java)
 - [JavaScript](https://github.com/scru128/javascript)
