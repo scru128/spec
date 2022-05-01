@@ -1,27 +1,28 @@
 # SCRU128: Sortable, Clock and Random number-based Unique identifier
 
-SCRU128 ID is yet another attempt to supersede [UUID] in the use cases that need
+SCRU128 ID is yet another attempt to supersede [UUID] for the users who need
 decentralized, globally unique time-ordered identifiers. SCRU128 is inspired by
 [ULID] and [KSUID] and has the following features:
 
 - 128-bit unsigned integer type
 - Sortable by generation time (as integer and as text)
-- 26-digit case-insensitive portable textual representation
-- 44-bit biased millisecond timestamp that ensures remaining life of 550 years
-- Up to 268 million time-ordered but unpredictable unique IDs per millisecond
-- 84-bit [_layered_ randomness](#layered-randomness) for collision resistance
+- 25-digit case-insensitive textual representation (Base36)
+- 48-bit millisecond Unix timestamp that ensures useful life until year 10889
+- Up to 281 trillion time-ordered but unpredictable unique IDs per millisecond
+- 80-bit [three-layer randomness](#design-notes-three-layer-randomness) for
+  global uniqueness
 
-Examples in the 26-digit canonical textual representation:
+Examples in the 25-digit canonical textual representation:
 
 ```
-00QBTG0FERFTCCNFISUBO489DI
-00QBTG0FERFTCCPFISU9NEF4CJ
-00QBTG0FERFTCCRFISU97R5OTB
-00QBTG0FERFTCCTFISUA4B4DFK
-00QBTG0FF6ULUKDFISU93H7KA9
-00QBTG0FF6ULUKFFISU9OC8U2F
-00QBTG0FF6ULUKHFISUAOVFSF4
-00QBTG0FF6ULUKJFISU94NVHK2
+0372HG16CSMSM50L8DIKCVUKC
+0372HG16CSMSM50L8DJL6XI25
+0372HG16CSMSM50L8DMGEPZZ1
+0372HG16CSMSM50L8DOIR3827
+0372HG16CY3NOWRACLS909WCD
+0372HG16CY3NOWRACLVP355CE
+0372HG16CY3NOWRACLXF2CTZH
+0372HG16CY3NOWRACLYUNYJKE
 ```
 
 [uuid]: https://en.wikipedia.org/wiki/Universally_unique_identifier
@@ -38,106 +39,202 @@ Examples in the 26-digit canonical textual representation:
 - [Rust](https://github.com/scru128/rust)
 - [Swift](https://github.com/scru128/swift-scru128)
 
-For those interested in implementing SCRU128: [SCRU128 Generator Tester]
+If you are interested in implementing SCRU128, see also [SCRU128 Generator
+Tester](https://github.com/scru128/gen_test).
 
-[scru128 generator tester]: https://github.com/scru128/gen_test
-
-## Specification v1.0.2
+## Specification v2.0.0
 
 A SCRU128 ID is a 128-bit unsigned integer consisting of four terms:
 
 ```
-timestamp * 2^84 + counter * 2^56 + per_sec_random * 2^32 + per_gen_random
+timestamp * 2^80 + counter_hi * 2^56 + counter_lo * 2^32 + entropy
 ```
 
 Where:
 
-- `timestamp` is a 44-bit unix time in milliseconds biased by 50 years (i.e.
-  milliseconds elapsed since 2020-01-01 00:00:00+00:00, ignoring leap seconds;
-  or, the unix time in milliseconds minus `1577836800000`).
-- `counter` is a 28-bit counter incremented by one for each new ID generated
-  within the same `timestamp` (reset to a 28-bit random number at initial
-  generation and whenever `timestamp` changes).
-- `per_sec_random` is a 24-bit random number renewed once per second (i.e. a
-  random number shared by all the IDs generated within the same second).
-- `per_gen_random` is a 32-bit random number renewed every time a new ID is
-  generated.
+- `timestamp` is a 48-bit Unix timestamp in milliseconds (i.e. milliseconds
+  elapsed since 1970-01-01 00:00:00+00:00, ignoring leap seconds).
+- `counter_hi` is a 24-bit randomly initialized counter that is incremented by
+  one when `counter_lo` reaches its maximum value. `counter_hi` is reset to a
+  random number when `timestamp` has moved forward by one second or more since
+  the last renewal of `counter_hi`.
+  - Note: `counter_hi` effectively works like an entropy component (rather than
+    a counter) that is refreshed only once per second.
+- `counter_lo` is a 24-bit randomly initialized counter that is incremented by
+  one for each new ID generated within the same `timestamp`. `counter_lo` is
+  reset to a random number whenever `timestamp` moves forward. When `counter_lo`
+  reaches its maximum value, `counter_hi` is incremented and `counter_lo` is
+  reset to zero.
+- `entropy` is a 32-bit random number renewed for each new ID generated.
 
-This is essentially equivalent to allocating four unsigned integer fields to a
-128-bit space as follows in a big-endian system, and thus it is easily
-implemented with binary operations.
+This definition is equivalent to allocating four unsigned integer fields to a
+128-bit space according to the following layout:
 
-| Bit numbers  | Field name     | Size    | Data type        |
-| ------------ | -------------- | ------- | ---------------- |
-| Msb 0 - 43   | timestamp      | 44 bits | Unsigned integer |
-| Msb 44 - 71  | counter        | 28 bits | Unsigned integer |
-| Msb 72 - 95  | per_sec_random | 24 bits | Unsigned integer |
-| Msb 96 - 127 | per_gen_random | 32 bits | Unsigned integer |
+| Bit numbers  | Field name | Size    | Data type        | Byte order |
+| ------------ | ---------- | ------- | ---------------- | ---------- |
+| Msb 0 - 47   | timestamp  | 48 bits | Unsigned integer | Big-endian |
+| Msb 48 - 71  | counter_hi | 24 bits | Unsigned integer | Big-endian |
+| Msb 72 - 95  | counter_lo | 24 bits | Unsigned integer | Big-endian |
+| Msb 96 - 127 | entropy    | 32 bits | Unsigned integer | Big-endian |
 
 ### Textual representation
 
-A SCRU128 ID is encoded in a string as a 128-bit unsigned integer denoted in the
-radix of 32 using the digits of `0-9A-V` (`0123456789ABCDEFGHIJKLMNOPQRSTUV`),
-with leading zeros added to form a 26-digit canonical representation. The
-following pseudo equation illustrates the encoding algorithm:
+A SCRU128 ID is encoded in a string using the _Base36_ encoding. The Base36
+denotes a SCRU128 ID as a 128-bit unsigned integer in the radix of 36 using the
+digits of `0-9A-Z` (`0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ`), with leading zeros
+added to form a 25-digit canonical representation. The following pseudo equation
+illustrates the encoding algorithm:
 
 ```
-1095473244246772103403544935821223346
-    =  0  * 32^25 +  0  * 32^24 + 26  * 32^23 + ... +  9  * 32^2 + 13  * 32^1 + 18
-    = '0' * 32^25 + '0' * 32^24 + 'Q' * 32^23 + ... + '9' * 32^2 + 'D' * 32^1 + 'I'
-    = "00QBTG0FERFTCCNFISUBO489DI"
+1993501768880490086615869617690763354
+    =  0  * 36^24 +  3  * 36^23 +  7  * 36^22 + ... + 27  * 36^2 + 29  * 36^1 + 22
+    = '0' * 36^24 + '3' * 36^23 + '7' * 36^22 + ... + 'R' * 36^2 + 'T' * 36^1 + 'M'
+    = "0372IJOJUXUHJSFKERYI2MRTM"
 ```
 
-Although a 26-digit base-32 numeral can encode 130-bit information, any numeral
-greater than `7VVVVVVVVVVVVVVVVVVVVVVVVV` (`2^128 - 1`, the largest 128-bit
-unsigned integer) is not a valid SCRU128 ID.
+Although a 25-digit Base36 numeral can encode more than 128-bit information, any
+numeral greater than `F5LXX1ZZ5PNORYNQGLHZMSP33` (`2^128 - 1`, the largest
+128-bit unsigned integer) is not a valid SCRU128 ID.
 
 For the sake of uniformity, an encoder should use uppercase letters in encoding
 IDs. A decoder, on the other hand, must always ignore cases when interpreting or
 lexicographically sorting encoded IDs.
 
-Converters for this simple base 32 notation are widely available in many
-languages; even if not, it is easily implemented with bitwise operations by
-translating each 5-bit group into one digit of `0-9A-V`, from the least
-significant digit to the most. Note that this encoding is different from some
-binary-to-text encodings referred to as _base32_ or _base32hex_ (e.g. [RFC
-4648]), which read and translate 5-bit groups from the most significant one to
-the least.
+The Base36 encoding shown above is available by default in several languages
+(e.g. `BigInteger#toString(int radix)` and `BigInteger(String val, int radix)`
+constructor in Java). Another easy way to implement it is by using 128-bit or
+arbitrary-precision integer division and modulo operations. The following C code
+illustrates a naive algorithm based on normal arrays and integers:
 
-[rfc 4648]: https://www.ietf.org/rfc/rfc4648.txt
+```c
+const uint8_t id[16] = {1,   127, 239, 57, 194, 100, 27,  165,
+                        106, 148, 131, 24, 136, 65,  224, 90};
 
-### Other considerations
+// convert byte array into digit value array
+uint8_t digit_values[25] = {0};
+for (int i = 0; i < 16; i++) {
+  unsigned int carry = id[i];
+  for (int j = 24; j >= 0; j--) {
+    carry += digit_values[j] * 256;
+    digit_values[j] = carry % 36;
+    carry = carry / 36;
+  }
+}
+
+// convert digit value array into string
+static const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+char text[26];
+text[25] = '\0';
+for (int i = 0; i < 25; i++) {
+  text[i] = digits[digit_values[i]];
+}
+printf("%s", text); // "0372IJOJUXUHJSFKERYI2MRTM"
+```
+
+See [the attached reference code] for a comprehensive example and test vectors.
+
+[the attached reference code]: https://github.com/scru128/spec/blob/v2.0.0/base36_128.c
+
+### Special-purpose IDs
+
+The IDs with `timestamp` set at zero or `2^48 - 1` are reserved for special
+purposes (e.g. use as dummy, error, or example values) and must not be used or
+assigned as an identifier of anything.
+
+### Considerations
 
 #### Quality of random numbers
 
 A generator should employ a cryptographically strong random or pseudorandom
-number generator in order to generate unpredictable IDs.
+number generator to generate unpredictable IDs.
 
-#### Reserved IDs
+#### Counter overflow handling
 
-The IDs with `timestamp` being set at zero or `2^44 - 1` are reserved for system
-uses and must not be used or assigned as an ID of anything.
+Counter overflow occurs at an extremely low probability when the randomly
+initialized `counter_hi` and `counter_lo` do not provide sufficient space for
+the IDs generated within a millisecond. The recommended approach to handle
+counter overflow is to increment `timestamp` and continue in the following way:
 
-#### Layered randomness
+1.  Increment `timestamp` by one.
+2.  Reset `counter_hi` to zero.
+3.  Reset `counter_lo` to a random number.
 
-SCRU128 utilizes monotonic `counter` to guarantee the uniqueness of IDs with the
-same `timestamp`; however, this mechanism does not ensure the uniqueness of IDs
-generated by multiple generators that do not share a `counter` state. SCRU128
-relies on random numbers to avoid collisions in such a situation.
+This approach is recommended over other options such as the "sleep till next
+tick" approach because this technique allows the generation of monotonically
+ordered IDs in a non-blocking manner. Raising an error on a counter overflow is
+generally not recommended because a counter overflow is not a fault of users of
+SCRU128.
 
-For a given length of random bits, the greater the number of random numbers
-generated, the higher the probability of collision. Therefore, SCRU128 gives
-some random bits a longer life to reduce the number of random number generation
-per a unit of time. As a result, even if each of multiple generators generates a
-million IDs at the same millisecond, no collision will occur as long as the
-random numbers generated only once per second (`per_sec_random`) differ.
+This approach results in a greater `timestamp` value than the real-time clock.
+Such a gap between `timestamp` and the wall clock should be handled as a small
+clock rollback discussed below.
 
-Note that, however, the `per_sec_random` field must be refreshed every second to
-prevent potential attackers from using this field as a generator's fingerprint.
-The 32-bit `per_gen_random` field must also be reset to a new random number
-whenever an ID is generated to make sure the adjacent IDs generated within the
-same `timestamp` are not predictable.
+#### Clock rollback handling
+
+A SCRU128 generator relies on a real-time clock to ensure the monotonic order of
+generated IDs; therefore, it cannot guarantee monotonicity when the clock moves
+back. When a generator detects a clock rollback by comparing the up-to-date
+timestamp from the system clock and the one embedded in the last generated ID,
+the recommended treatment is:
+
+1.  If the rollback is small enough (e.g. a few seconds), treat the `timestamp`
+    of the last generated ID as the up-to-date one, betting that the wall clock
+    will catch up soon.
+2.  Otherwise, reset `timestamp` to the wall clock and `counter_hi` and
+    `counter_lo` to random numbers if the monotonic order of IDs is not
+    critically important, or raise an error if it is.
+
+This approach keeps the monotonic order of IDs when a clock rollback is small,
+while it otherwise resets the generator and proceeds as if another new generator
+were created to minimize the chance of collision.
+
+#### Stateless variant
+
+A generator may fill `counter_hi` and `counter_lo` with random numbers if it
+generates IDs infrequently. Such a stateless implementation is acceptable,
+though not recommended, because the outcome is not distinguishable from
+compliant IDs.
+
+### Design notes: three-layer randomness
+
+SCRU128 utilizes timestamps and counters to ensure the uniqueness of IDs
+generated by a single generator, whereas it relies on 80-bit entropy in the use
+cases with distributed generators. SCRU128 fills the 80-bit field with a random
+number when a new ID is infrequently (less than one ID per second) generated.
+For the distributed high-load use cases, SCRU128 assigns different lifetimes to
+the three entropy components to improve the collision resistance:
+
+1.  `counter_hi`: reset to a random number every second
+2.  `counter_lo`: reset to a random number every millisecond
+3.  `entropy`: reset to a random number for every new ID generated
+
+The longer lifetimes of `counter_hi` and `counter_lo` reduce the number of
+random numbers consumed and accordingly reduce the probability of at least one
+collision because, for a given length of random bits, the less the number of
+dice throws, the lower the chance of collision.
+
+In other words, generators are assigned to 24-bit `counter_hi` buckets every
+second, and thus they will not collide with each other as long as their buckets
+differ, even if each generates a bunch of IDs. 24-bit random numbers usually
+collide if millions of instances are generated, but the one-second interval of
+`counter_hi` renewals decreases the number of trials drastically. Nevertheless,
+`counter_hi` is refreshed every second to prevent potential attackers from
+exploiting this field as a generator's fingerprint.
+
+Even within the same bucket, the generators will not collide as long as initial
+`counter_lo` values are sufficiently distant from each other. Such a near match
+probability, if tried only once a millisecond, is much lower than [the simple
+birthday collision probability] calculated over all the IDs generated within a
+millisecond. `entropy` provides additional protection in the extremely rare
+cases where both `counter_hi` and `counter_lo` collide, but it is primarily
+intended to ensure a certain level of unguessability of consecutive IDs
+generated by a single generator.
+
+[the simple birthday collision probability]: https://en.wikipedia.org/wiki/Birthday_problem
 
 ### License
 
-This work is licensed under a [Creative Commons Attribution 4.0 International (CC BY 4.0) License](http://creativecommons.org/licenses/by/4.0/).
+This work is licensed under a [Creative Commons Attribution 4.0 International
+(CC BY 4.0) License].
+
+[creative commons attribution 4.0 international (cc by 4.0) license]: http://creativecommons.org/licenses/by/4.0/
