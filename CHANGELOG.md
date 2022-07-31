@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.0.1 - 2022-07-31
+
+- Added bit layout guideline
+- Made minor improvements
+
 ## v2.0.0 - 2022-05-01
 
 ### Changed

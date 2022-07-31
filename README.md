@@ -42,7 +42,7 @@ Examples in the 25-digit canonical textual representation:
 If you are interested in implementing SCRU128, see also [SCRU128 Generator
 Tester](https://github.com/scru128/gen_test).
 
-## Specification v2.0.0
+## Specification v2.0.1
 
 A SCRU128 ID is a 128-bit unsigned integer consisting of four terms:
 
@@ -76,6 +76,10 @@ This definition is equivalent to allocating four unsigned integer fields to a
 | Msb 48 - 71  | counter_hi | 24 bits | Unsigned integer | Big-endian |
 | Msb 72 - 95  | counter_lo | 24 bits | Unsigned integer | Big-endian |
 | Msb 96 - 127 | entropy    | 32 bits | Unsigned integer | Big-endian |
+
+Note that this specification does not specify a canonical bit layout of SCRU128
+ID. An implementation may employ any binary form of a 128-bit unsigned integer
+to represent a SCRU128 ID.
 
 ### Textual representation
 
@@ -124,16 +128,16 @@ for (int i = 0; i < 16; i++) {
 // convert digit value array into string
 static const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 char text[26];
-text[25] = '\0';
 for (int i = 0; i < 25; i++) {
   text[i] = digits[digit_values[i]];
 }
-printf("%s", text); // "0372IJOJUXUHJSFKERYI2MRTM"
+text[25] = '\0';
+puts(text); // 0372IJOJUXUHJSFKERYI2MRTM
 ```
 
 See [the attached reference code] for a comprehensive example and test vectors.
 
-[the attached reference code]: https://github.com/scru128/spec/blob/v2.0.0/base36_128.c
+[the attached reference code]: https://github.com/scru128/spec/blob/v2.0.1/base36_128.c
 
 ### Special-purpose IDs
 
@@ -204,9 +208,9 @@ number when a new ID is infrequently (less than one ID per second) generated.
 For the distributed high-load use cases, SCRU128 assigns different lifetimes to
 the three entropy components to improve the collision resistance:
 
-1.  `counter_hi`: reset to a random number every second
-2.  `counter_lo`: reset to a random number every millisecond
-3.  `entropy`: reset to a random number for every new ID generated
+1.  24-bit `counter_hi`: reset to a random number every second
+2.  24-bit `counter_lo`: reset to a random number every millisecond
+3.  32-bit `entropy`: reset to a random number for every new ID generated
 
 The longer lifetimes of `counter_hi` and `counter_lo` reduce the number of
 random numbers consumed and accordingly reduce the probability of at least one
