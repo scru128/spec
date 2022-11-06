@@ -1,4 +1,4 @@
-/** base36_128.c - Naive Base36 implementation for 128-bit data */
+/** base36_128.c - Base36 reference implementation for 128-bit data */
 
 #include <assert.h>
 #include <stdint.h>
@@ -11,12 +11,9 @@
  * (i.e. bytes). Conversion of a digit value array from/to a string is taken
  * care of by `encode()` and `decode()` functions.
  *
- * This function is kept naive and slow to focus on the illustration of the
- * algorithm. Typical optimization techniques include:
- *
- * - use larger `carry` and read multiple `in` digits for each outer loop
- * - break inner loop when `carry` is zero and remaining `out` digits are all
- *   not updated from initial value (zero)
+ * This function includes naive code (turned on by the `USE_NAIVE_CODE` flag)
+ * that focuses on the illustration of the algorithm and optimized code that
+ * demonstrates typical optimization approaches.
  */
 static int convert_base(const uint8_t *in, int in_len, int in_base,
                         uint8_t *out, int out_len, int out_base) {
@@ -24,8 +21,12 @@ static int convert_base(const uint8_t *in, int in_len, int in_base,
     out[i] = 0;
   }
 
+#ifdef USE_NAIVE_CODE
   for (int i = 0; i < in_len; i++) {
+    // read one digit from `in` for each outer loop
     uint_fast16_t carry = in[i];
+
+    // fill in `out` from right to left, while carrying up prior result to left
     for (int j = out_len - 1; j >= 0; j--) {
       carry += out[j] * in_base;
       out[j] = carry % out_base;
@@ -35,6 +36,53 @@ static int convert_base(const uint8_t *in, int in_len, int in_base,
       return -1; // too small out_len
     }
   }
+#else
+  /*
+   * The refined code below applies the following techniques to the naive code:
+   *
+   * - use larger `carry` and read multiple `in` digits for each outer loop
+   * - break inner loop when `carry` is zero and none of remaining `out` digits
+   *   has been updated from initial value (zero)
+   */
+
+  // determine number of `in` digits to read for each outer loop
+  int word_len = 0;
+  uint64_t word_base = 1; // set to in_base ^ word_len
+  while (word_base < UINT64_MAX / ((uint64_t)in_base * out_base)) {
+    word_len++;
+    word_base *= in_base;
+  }
+
+  int out_used = out_len - 1; // storage to memorize range of `out` filled
+
+  // iterate over `in` word by word, having `i` point to head of each word
+  int i = in_len % word_len;
+  if (i > 0) {
+    i -= word_len;
+  }
+  for (; i < in_len; i += word_len) {
+    // read multiple `in` digits for each outer loop
+    uint64_t carry = 0;
+    for (int j = i < 0 ? 0 : i; j < i + word_len; j++) {
+      carry = carry * in_base + in[j];
+    }
+
+    for (int j = out_len - 1; j >= 0; j--) {
+      carry += out[j] * word_base;
+      out[j] = carry % out_base;
+      carry = carry / out_base;
+
+      // break inner loop when `carry` and remaining `out` digits are all zero
+      if (carry == 0 && j <= out_used) {
+        out_used = j;
+        break;
+      }
+    }
+    if (carry != 0) {
+      return -1; // too small out_len
+    }
+  }
+#endif /* #ifdef USE_NAIVE_CODE */
 
   return 0; // success
 }
