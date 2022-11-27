@@ -46,9 +46,9 @@ static int convert_base(const uint8_t *in, int in_len, int in_base,
    */
 
   // determine number of `in` digits to read for each outer loop
-  int word_len = 0;
-  uint64_t word_base = 1; // set to in_base ^ word_len
-  while (word_base < UINT64_MAX / ((uint64_t)in_base * out_base)) {
+  int word_len = 1;
+  uint64_t word_base = in_base; // set to in_base ^ word_len
+  while (word_base <= UINT64_MAX / ((uint64_t)in_base * out_base)) {
     word_len++;
     word_base *= in_base;
   }
