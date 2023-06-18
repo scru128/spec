@@ -95,7 +95,7 @@ static int convert_base(const uint8_t *in, int in_len, int in_base,
  */
 void encode(const uint8_t *bytes, char *out) {
   // Base36 digit characters
-  static const char DIGITS[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  static const char DIGITS[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
   // convert byte array into digit value array
   uint8_t digit_values[25];
@@ -168,16 +168,16 @@ static void test_positive_cases(void) {
        "0000000000000000000000000"},
       {{0x01, 0x7f, 0xee, 0x7f, 0xef, 0x41, 0x7e, 0x2b, 0x34, 0x32, 0xac, 0x2e,
         0xc5, 0x53, 0x68, 0x7c},
-       "0372HG16CSMSM50L8DIKCVUKC"},
+       "0372hg16csmsm50l8dikcvukc"},
       {{0x01, 0x7f, 0xee, 0x7f, 0xef, 0x42, 0x7e, 0x2b, 0x34, 0x6c, 0x0f, 0xf4,
         0x14, 0xbb, 0xcf, 0xfd},
-       "0372HG16CY3NOWRACLS909WCD"},
+       "0372hg16cy3nowracls909wcd"},
       {{0x01, 0x7f, 0xef, 0x39, 0xc2, 0x64, 0x1b, 0xa5, 0x6a, 0x94, 0x83, 0x18,
         0x88, 0x41, 0xe0, 0x5a},
-       "0372IJOJUXUHJSFKERYI2MRTM"},
+       "0372ijojuxuhjsfkeryi2mrtm"},
       {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0xff, 0xff, 0xff, 0xff},
-       "F5LXX1ZZ5PNORYNQGLHZMSP33"}};
+       "f5lxx1zz5pnorynqglhzmsp33"}};
   const int N_CASES = 5;
 
   for (int i = 0; i < N_CASES; i++) {
@@ -206,11 +206,11 @@ static void test_negative_cases(void) {
   assert(err != 0);
   err = decode("00000000000000000000000000", out_bytes);
   assert(err != 0);
-  err = decode("F5LXX1ZZ5PN+RYNQGLHZMSP33", out_bytes);
+  err = decode("f5lxx1zz5pn+rynqglhzmsp33", out_bytes);
   assert(err != 0);
-  err = decode("F5LXX1ZZ5PNORYNQGLHZMSP34", out_bytes);
+  err = decode("f5lxx1zz5pnorynqglhzmsp34", out_bytes);
   assert(err != 0);
-  err = decode("ZZZZZZZZZZZZZZZZZZZZZZZZZ", out_bytes);
+  err = decode("zzzzzzzzzzzzzzzzzzzzzzzzz", out_bytes);
   assert(err != 0);
 }
 

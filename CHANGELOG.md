@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.1.0 - unreleased
+
+- Switched default letter case for generators from uppercase to lowercase
+
 ## v2.0.1 - 2022-07-31
 
 - Added bit layout guideline

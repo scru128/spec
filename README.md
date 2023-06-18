@@ -15,14 +15,14 @@ decentralized, globally unique time-ordered identifiers. SCRU128 is inspired by
 Examples in the 25-digit canonical textual representation:
 
 ```
-0372HG16CSMSM50L8DIKCVUKC
-0372HG16CSMSM50L8DJL6XI25
-0372HG16CSMSM50L8DMGEPZZ1
-0372HG16CSMSM50L8DOIR3827
-0372HG16CY3NOWRACLS909WCD
-0372HG16CY3NOWRACLVP355CE
-0372HG16CY3NOWRACLXF2CTZH
-0372HG16CY3NOWRACLYUNYJKE
+0372hg16csmsm50l8dikcvukc
+0372hg16csmsm50l8djl6xi25
+0372hg16csmsm50l8dmgepzz1
+0372hg16csmsm50l8doir3827
+0372hg16cy3nowracls909wcd
+0372hg16cy3nowraclvp355ce
+0372hg16cy3nowraclxf2ctzh
+0372hg16cy3nowraclyunyjke
 ```
 
 [UUID]: https://en.wikipedia.org/wiki/Universally_unique_identifier
@@ -85,22 +85,22 @@ to represent a SCRU128 ID.
 
 A SCRU128 ID is encoded in a string using the _Base36_ encoding. The Base36
 denotes a SCRU128 ID as a 128-bit unsigned integer in the radix of 36 using the
-digits of `0-9A-Z` (`0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ`), with leading zeros
+digits of `0-9a-z` (`0123456789abcdefghijklmnopqrstuvwxyz`), with leading zeros
 added to form a 25-digit canonical representation. The following pseudo equation
 illustrates the encoding algorithm:
 
 ```
 1993501768880490086615869617690763354
     =  0  * 36^24 +  3  * 36^23 +  7  * 36^22 + ... + 27  * 36^2 + 29  * 36^1 + 22
-    = '0' * 36^24 + '3' * 36^23 + '7' * 36^22 + ... + 'R' * 36^2 + 'T' * 36^1 + 'M'
-    = "0372IJOJUXUHJSFKERYI2MRTM"
+    = '0' * 36^24 + '3' * 36^23 + '7' * 36^22 + ... + 'r' * 36^2 + 't' * 36^1 + 'm'
+    = "0372ijojuxuhjsfkeryi2mrtm"
 ```
 
 Although a 25-digit Base36 numeral can encode more than 128-bit information, any
-numeral greater than `F5LXX1ZZ5PNORYNQGLHZMSP33` (`2^128 - 1`, the largest
+numeral greater than `f5lxx1zz5pnorynqglhzmsp33` (`2^128 - 1`, the largest
 128-bit unsigned integer) is not a valid SCRU128 ID.
 
-For the sake of uniformity, an encoder should use uppercase letters in encoding
+For the sake of uniformity, an encoder should use lowercase letters in encoding
 IDs. A decoder, on the other hand, must always ignore cases when interpreting or
 lexicographically sorting encoded IDs.
 
@@ -126,18 +126,18 @@ for (int i = 0; i < 16; i++) {
 }
 
 // convert digit value array into string
-static const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 char text[26];
 for (int i = 0; i < 25; i++) {
   text[i] = digits[digit_values[i]];
 }
 text[25] = '\0';
-puts(text); // 0372IJOJUXUHJSFKERYI2MRTM
+puts(text); // 0372ijojuxuhjsfkeryi2mrtm
 ```
 
 See [the attached reference code] for a comprehensive example and test vectors.
 
-[the attached reference code]: https://github.com/scru128/spec/blob/v2.0.1/base36_128.c
+[the attached reference code]: https://github.com/scru128/spec/blob/v2.1.0/base36_128.c
 
 ### Special-purpose IDs
 
