@@ -1,8 +1,9 @@
 # Changelog
 
-## v2.1.0 - unreleased
+## v2.1.0 - 2023-06-21
 
 - Switched default letter case for generators from uppercase to lowercase
+- Added optimized code examples of Base36 encoding and decoding
 
 ## v2.0.1 - 2022-07-31
 
