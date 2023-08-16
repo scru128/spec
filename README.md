@@ -42,7 +42,7 @@ Examples in the 25-digit canonical textual representation:
 If you are interested in implementing SCRU128, see also [SCRU128 Generator
 Tester](https://github.com/scru128/gen_test).
 
-## Specification v2.0.1
+## Specification v2.1.1
 
 A SCRU128 ID is a 128-bit unsigned integer consisting of four terms:
 
@@ -52,7 +52,7 @@ timestamp * 2^80 + counter_hi * 2^56 + counter_lo * 2^32 + entropy
 
 Where:
 
-- `timestamp` is a 48-bit Unix timestamp in milliseconds (i.e. milliseconds
+- `timestamp` is a 48-bit Unix timestamp in milliseconds (i.e., milliseconds
   elapsed since 1970-01-01 00:00:00+00:00, ignoring leap seconds).
 - `counter_hi` is a 24-bit randomly initialized counter that is incremented by
   one when `counter_lo` reaches its maximum value. `counter_hi` is reset to a
@@ -105,7 +105,7 @@ IDs. A decoder, on the other hand, must always ignore cases when interpreting or
 lexicographically sorting encoded IDs.
 
 The Base36 encoding shown above is available by default in several languages
-(e.g. `BigInteger#toString(int radix)` and `BigInteger(String val, int radix)`
+(e.g., `BigInteger#toString(int radix)` and `BigInteger(String val, int radix)`
 constructor in Java). Another easy way to implement it is by using 128-bit or
 arbitrary-precision integer division and modulo operations. The following C code
 illustrates a naive algorithm based on normal arrays and integers:
@@ -137,12 +137,12 @@ puts(text); // 0372ijojuxuhjsfkeryi2mrtm
 
 See [the attached reference code] for a comprehensive example and test vectors.
 
-[the attached reference code]: https://github.com/scru128/spec/blob/v2.1.0/base36_128.c
+[the attached reference code]: https://github.com/scru128/spec/blob/v2.1.1/base36_128.c
 
 ### Special-purpose IDs
 
 The IDs with `timestamp` set at zero or `2^48 - 1` are reserved for special
-purposes (e.g. use as dummy, error, or example values) and must not be used or
+purposes (e.g., use as dummy, error, or example values) and must not be used or
 assigned as an identifier of anything.
 
 ### Considerations
@@ -181,7 +181,7 @@ back. When a generator detects a clock rollback by comparing the up-to-date
 timestamp from the system clock and the one embedded in the last generated ID,
 the recommended treatment is:
 
-1.  If the rollback is small enough (e.g. a few seconds), treat the `timestamp`
+1.  If the rollback is small enough (e.g., a few seconds), treat the `timestamp`
     of the last generated ID as the up-to-date one, betting that the wall clock
     will catch up soon.
 2.  Otherwise, reset `timestamp` to the wall clock and `counter_hi` and

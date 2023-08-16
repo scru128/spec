@@ -8,7 +8,7 @@
  *
  * This function converts digit value arrays in any pair of bases from 2 to 256,
  * while in this file it is used only to convert between Base36 and Base256
- * (i.e. bytes). Conversion of a digit value array from/to a string is taken
+ * (i.e., bytes). Conversion of a digit value array from/to a string is taken
  * care of by `encode()` and `decode()` functions.
  *
  * This function includes naive code (turned on by the `USE_NAIVE_CODE` flag)

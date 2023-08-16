@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.1.1 - 2023-08-16
+
+- Fixed typo and punctuations
+
 ## v2.1.0 - 2023-06-21
 
 - Switched default letter case for generators from uppercase to lowercase
